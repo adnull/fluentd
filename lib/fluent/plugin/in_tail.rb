@@ -113,6 +113,8 @@ module Fluent::Plugin
     config_param :follow_inodes, :bool, default: false
     desc 'Maximum length of line. The longer line is just skipped.'
     config_param :max_line_size, :size, default: nil
+    desc 'Don\'t warn on unmatched lines in multiline mode, leave only debug message'
+    config_param :ignore_unmatched_lines, :bool, default: false
 
     config_section :parse, required: false, multi: true, init: true, param_name: :parser_configs do
       config_argument :usage, :string, default: 'in_tail_parser'
@@ -671,7 +673,8 @@ module Fluent::Plugin
               record[@path_key] ||= tail_watcher.path unless @path_key.nil?
               es.add(Fluent::EventTime.now, record)
             end
-            log.warn "pattern not matched: #{line.inspect}"
+            log.method( @ignore_unmatched_lines ? :debug : :warn ).call "pattern not matched: #{line.inspect}"
+            end
           end
         }
       rescue => e
